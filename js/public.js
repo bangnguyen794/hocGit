@@ -1,89 +1,52 @@
-var firebaseConfig = {
-    apiKey: "AIzaSyDVEV7qMYKtF1F_cepeHtI-PWtUFk-zdZ8",
-    authDomain: "vietmyappandroi.firebaseapp.com",
-    databaseURL: "https://vietmyappandroi.firebaseio.com",
-    projectId: "vietmyappandroi",
-    storageBucket: "vietmyappandroi.appspot.com",
-    messagingSenderId: "415931179429",
-    appId: "1:415931179429:web:eaf81440875b12557f884c",
-    measurementId: "G-measurement-id",
-  };
+$scope.Fun_click_thongbao = function (id, loai) {
+    $scope.chitiet_thongbao = _.find($scope.data_thongbao, function (o) { return o.id == id; });
+    Change_status_thongbao($scope, $http, id, loai).then(resolve => {
 
-  // Initialize Firebase
-  var defaultProject = firebase.initializeApp(firebaseConfig);
+        if (resolve.success) {
 
-  console.log(defaultProject);  // "[DEFAULT]"
-  
-  // Option 1: Access Firebase services via the defaultProject variable
-  //var defaultStorage = defaultProject.storage();
-  //var defaultFirestore = defaultProject.firestore();
-  
-  // Option 2: Access Firebase services using shorthand notation
-  //defaultStorage = firebase.storage();
-  //defaultFirestore = firebase.firestore();
+            // Cập nhật lại data_thongbao trong localStorage
+            if ($scope.chitiet_thongbao.moi) {
+                $scope.chitiet_thongbao.moi = false;
+                $scope.data_all_menu.data_thongbao.count_thongbao.tongchuaxem--;
+            } 
 
-  
-var app = angular.module('AppBarCode', []);
-app.controller('myAppBarCode', function($scope) {
-    $scope.d_soluong = 10; $scope.d_fist = 2020;
-    $scope.d_ma1 = "";
-    $scope.d_ma2 = "";
-   $scope.Fun_clickPrint = function(){
-      let ma1 = $scope.d_ma1;
-      let ma2 = $scope.d_ma2;
-      let soluong = $scope.d_soluong;
-      let div = "";
-      if(soluong!=0&& soluong<101){
-        let fisst = $scope.d_fist; 
-        for(var i =fisst;i< ($scope.d_fist+soluong);i++){
-           
-            if(i % 2 == 0){
-                div += `<div style="width:100%;display:flex;">  <div style="margin:auto; width:390px;display:flex;margin-top:0px;padding:4px 7px;box-sizing:border-box">`;
-
+            localStorage.setItem("data_menu", JSON.stringify($scope.data_all_menu));
+            $scope.$apply();
+            if (loai == 'page') {
+                var arayValue = $scope.chitiet_thongbao.value.split(',');
+                let page = arayValue[0], id = arayValue[1],link='';
+                if (page == "chitietdonhang") {
+                    link = location.origin + "/quanly/qlthuonghieu/quanlydonhang_thuonghieu.aspx?mahd=" + id;
+                } else if (page == "chitietthuonghieu") {
+                    link = location.origin + "/quanly/qlthuonghieu/chitiet_thuonghieu_tk.aspx?id=" + id;
+                } else  if (page == "chitietsanpham") {
+                    let command = arayValue[2], id_con = arayValue[3];
+                    if (command == 'danhgia') {
+                        link = location.origin + "/quanly/qlthuonghieu/chitiet_thuonghieu_tk.aspx?id=" + id + "&cm=" + command + "&parent_id=" + id_con;
+                    }
+                }else  if (page == "kichhoatbaohanh") {
+                    link = location.origin + "/quanly/sp_baohanh/sp_baohanh.aspx";
+                }else  if (page == "quanlydonhang") {
+                    link = location.origin + "/quanly/sp_baohanh/sp_baohanh.aspx";
+                }
+                window.location.href = check_replaceDomain(link);
+            } else   if (loai == 'link') {
+                window.location.href = check_replaceDomain($scope.chitiet_thongbao.value);
+            } else if (loai == 'popup') {
+                $('#myModal-ThongbaoPopup').modal('show');
             }
-                let ma = ma1+`-`+ma2+`-`+fisst;
-                div+=`<svg  class="barcode"
-                jsbarcode-format="code39"
-                jsbarcode-value="`+ma+`"
-                jsbarcode-textmargin="0"
-                jsbarcode-width="1"
-                jsbarcode-height="35"
-                jsbarcode-fontSize="13"
-               >
-            </svg>`
-            if (i % 2 != 0) {
-                div += ` </div> </div>`;
-                div += `<div style="page-break-after:always;width:100%"> </div>`;
-            }
+
+
+        } else {
+            mscAlert({
+                title: resolve.message,  // default: ''
+                okText: 'Đóng',    // default: OK
+            });
         }
-        $("#contenBarcode").html(div).hide();
-        JsBarcode(".barcode").init();
-        setTimeout(function(){
-            printCode($("#contenBarcode").html());
-        },500);
-      }else{
-          alert("Vui lòng điền số lượng in  ");
-      }
-   }
-  
-   function printCode(html) {
-    //var divContents = document.getElementById("GFG").innerHTML;
 
-    let a = window.open('', '', 'left=0,top=10,width=1,height=1,toolbar=0,scrollbars=0,status=0,height=700, width=800');
-    //var a = window.open('', '', 'height=500, width=500');
-    a.document.write('<html>');
-    a.document.write('<head> <style> @font-face { font-family: myFirstFontBold; src: url(../components/Fonts/UTM_AvoBold.ttf); } @font-face { font-family: myFirstFont; src: url(../components/Fonts/UTM_Avo.ttf); } .temQr:before { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: -1; margin: -2px; border-radius: inherit; background: linear-gradient(to left,#F44336, #efad50, #F44336); }</style> </head><body style="margin:0px" >');
-    a.document.write(html);
-    a.document.write('</body></html>');
 
-    a.document.close();
-    setTimeout(function () {
-        a.print();
-        a.close();
-        a.focus();
-    }, 500);
+    });
 
 
 }
-//    JsBarcode("#itf-14", "1234567890123", {format: "itf14"});
-}); 
+
